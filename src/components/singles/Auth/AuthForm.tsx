@@ -28,6 +28,18 @@ import { GameButton } from '@/components/singles/Game/Game';
 export type AuthFormProps = {
 	className?: string;
 };
+export type AuthInputTextProps = {
+	id: string;
+	type: 'text' | 'email';
+	label?: string;
+	name?: string;
+	placeholder?: string;
+	defaultValue?: string;
+	description?: string;
+	error?: string;
+	className?: string;
+	onChange?: (e: { name: string; value: string }) => void;
+};
 
 // Motion
 const motionParent = {
@@ -172,7 +184,7 @@ export default function AuthForm(props: AuthFormProps) {
 					<AuthInputText
 						ref={inputNameEl}
 						id="name"
-						as="text"
+						type="text"
 						label="Name"
 						placeholder="Your Name"
 						defaultValue={inputValues.current.name}
@@ -184,7 +196,7 @@ export default function AuthForm(props: AuthFormProps) {
 					<AuthInputText
 						ref={inputEmailEl}
 						id="email"
-						as="email"
+						type="email"
 						label="Email"
 						defaultValue={inputValues.current.email}
 						placeholder="your@email.com"
@@ -200,27 +212,13 @@ export default function AuthForm(props: AuthFormProps) {
 	);
 }
 
-// Types
-export type AuthInputTextProps = {
-	id: string;
-	as: 'text' | 'email';
-	label?: string;
-	name?: string;
-	placeholder?: string;
-	defaultValue?: string;
-	description?: string;
-	error?: string;
-	className?: string;
-	onChange?: (e: { name: string; value: string }) => void;
-};
-
 // Default component
 function AuthInputTextFxn(props: AuthInputTextProps, ref: React.Ref<any>) {
 	/*----- Props -----*/
 
 	// Deconstruct props
 	const {
-		as = 'text',
+		type = 'text',
 		label,
 		placeholder = 'your@email.com',
 		defaultValue,
@@ -284,15 +282,15 @@ function AuthInputTextFxn(props: AuthInputTextProps, ref: React.Ref<any>) {
 			)}
 			<div className="input__field relative mt-2 rounded-md shadow-sm">
 				<input
-					ref={inputEl}
-					id={id}
 					className={classNames(
 						`block w-full border rounded-md px-3 py-1.5 pr-10 outline-none transition-color duration-300 ease-out bg-transparent placeholder:text-white/50`,
 						error
 							? 'border-red-500/50 text-white focus:border-red-500'
 							: 'border-white/50 focus:border-white'
 					)}
-					type={as}
+					ref={inputEl}
+					id={id}
+					type={type}
 					name="email"
 					placeholder={placeholder}
 					defaultValue={defaultValue}

@@ -27,9 +27,11 @@ import { StarIcon, XMarkIcon } from '@heroicons/react/24/solid';
 const motionPage = {
 	initial: (delay: number = 0) => ({
 		x: '150%',
+		opacity: 0,
 	}),
 	animate: (delay: number = 0) => ({
 		x: '0%',
+		opacity: 1,
 		transition: {
 			duration: 0.3,
 			ease: 'easeInOut',
@@ -38,6 +40,7 @@ const motionPage = {
 	}),
 	exit: (delay: number = 0) => ({
 		x: '-150%',
+		opacity: 0,
 		transition: {
 			duration: 0.3,
 			ease: 'easeInOut',
@@ -295,7 +298,7 @@ export function GameIntro(props: GameIntroProps) {
 						Welcome {currentUser?.name?.split(' ')[0] ?? 'to the game'}!
 					</h1>
 					<p className="game__text font-body text-base">
-						You will be shown a series of album covers. Identify the artist from
+						You will be shown a series of album covers. Identify the album from
 						the options provided.
 					</p>
 					<div className="game__buttons">
@@ -590,7 +593,7 @@ export function GameOption(props: GameOptionProps) {
 			/>
 			<div
 				className={classNames(
-					`game__option-highlight absolute z-20 top-0 left-0 h-full transition-all duration-200 ease-out`,
+					`game__option-highlight absolute z-20 top-0 left-0 h-full transition-all duration-300 ease-out`,
 					theme === 'default' && `w-0 group-hover:w-full bg-gold`,
 					theme === 'correct' && `w-full bg-green`,
 					theme === 'incorrect' && `w-full bg-red`

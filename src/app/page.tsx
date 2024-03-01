@@ -4,7 +4,7 @@
 /*---------- Imports ----------*/
 
 // Config
-// ...
+import { staticData } from '@/data/staticData';
 
 // Scripts
 // ...
@@ -20,23 +20,38 @@ import Section404 from '@/components/sections/Section404';
 export default async function PageHome() {
 	/*----- Init -----*/
 
-	// Fetch JSON data
-	const response = await fetch(
-		'https://frontend-interview.evidentinsights.com/'
-	);
-
-	// If error return 404
-	if (!response.ok) {
+	// If development, use static data
+	if (process.env.NODE_ENV === 'development') {
 		return (
-			<Section404
-				title={`400: Bad Request`}
-				body={`A status code of 400 indicates that the server did not understand the request due to bad syntax.`}
-			/>
+			<TheAuthProvider>
+				<SectionGame data={staticData} />
+			</TheAuthProvider>
 		);
 	}
 
-	// Get data
-	const data = await response.json();
+	// Fetch JSON data
+	let data;
+	try {
+		const response = await fetch(
+			'https://frontend-interview.evidentinsights.com/'
+		);
+		if (!response.ok) {
+			return (
+				<Section404
+					title={`400: Bad Request`}
+					body={`The server could not understand the request. Please try again later.`}
+				/>
+			);
+		}
+		data = await response.json();
+	} catch (error) {
+		return (
+			<Section404
+				title={`???: Fetch failed`}
+				body={`There was an error fetching the data. Please try again later.`}
+			/>
+		);
+	}
 
 	// Return default
 	return (

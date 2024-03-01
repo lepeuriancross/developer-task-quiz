@@ -6,8 +6,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint",
-		"test": "jest"
+		"lint": "next lint"
 	},
 	"dependencies": {
 		"@heroicons/react": "^2.1.1",
@@ -15,8 +14,7 @@
 		"next": "14.1.0",
 		"react": "^18",
 		"react-dom": "^18",
-		"react-freeze": "^1.0.4",
-		"ts-jest": "^29.1.2"
+		"react-freeze": "^1.0.4"
 	},
 	"devDependencies": {
 		"@types/node": "^20",
