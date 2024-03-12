@@ -6,6 +6,7 @@
 export type User = {
 	name: string;
 	email: string;
+	highScore?: number;
 };
 
 /*---------- Game ----------*/

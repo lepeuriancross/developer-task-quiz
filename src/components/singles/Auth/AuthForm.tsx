@@ -5,9 +5,6 @@
 
 /*---------- Imports ----------*/
 
-// Config
-import { User } from '@/types';
-
 // Scripts (node)
 import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 
@@ -35,6 +32,7 @@ export type AuthInputTextProps = {
 	name?: string;
 	placeholder?: string;
 	defaultValue?: string;
+	autoComplete?: string;
 	description?: string;
 	error?: string;
 	className?: string;
@@ -71,7 +69,10 @@ export default function AuthForm(props: AuthFormProps) {
 	/*----- Refs -----*/
 
 	// Ref - inputValues
-	const inputValues = useRef({ name: '', email: '' });
+	const inputValues = useRef({
+		name: '',
+		email: '',
+	});
 
 	// Ref inputName
 	const inputNameEl = useRef<HTMLInputElement>(null);
@@ -130,7 +131,6 @@ export default function AuthForm(props: AuthFormProps) {
 
 	// Function - update value
 	const updateValue = (name: 'name' | 'email', value: string) => {
-		console.log('Input changed', inputValues.current);
 		inputValues.current[name] = value;
 	};
 
@@ -188,6 +188,7 @@ export default function AuthForm(props: AuthFormProps) {
 						label="Name"
 						placeholder="Your Name"
 						defaultValue={inputValues.current.name}
+						autoComplete="fullName"
 						error={errors.name}
 						onChange={handleChange}
 					/>
@@ -200,6 +201,7 @@ export default function AuthForm(props: AuthFormProps) {
 						label="Email"
 						defaultValue={inputValues.current.email}
 						placeholder="your@email.com"
+						autoComplete="email"
 						error={errors.email}
 						onChange={handleChange}
 					/>
@@ -222,6 +224,7 @@ function AuthInputTextFxn(props: AuthInputTextProps, ref: React.Ref<any>) {
 		label,
 		placeholder = 'your@email.com',
 		defaultValue,
+		autoComplete,
 		description,
 		error,
 		id,
@@ -291,9 +294,10 @@ function AuthInputTextFxn(props: AuthInputTextProps, ref: React.Ref<any>) {
 					ref={inputEl}
 					id={id}
 					type={type}
-					name="email"
+					name={id}
 					placeholder={placeholder}
 					defaultValue={defaultValue}
+					autoComplete={autoComplete}
 					aria-invalid="true"
 					aria-describedby={`${id}-message`}
 					onChange={handleChange}

@@ -67,6 +67,11 @@ export default function TheAuthProvider(props: TheAuthProviderProps) {
 
 	/*----- Store -----*/
 
+	// State - auth state
+	const [authState, setAuthState] = useState<
+		'idle' | 'waiting' | 'error' | 'success'
+	>('idle');
+
 	// State - current user
 	const [currentUser, setCurrentUser] = useState<User | null>(
 		previousUser ?? null
@@ -76,11 +81,21 @@ export default function TheAuthProvider(props: TheAuthProviderProps) {
 
 	// Function - singIn
 	const singIn = async (name: string, email: string) => {
-		// Set user
-		setCurrentUser({
-			name,
-			email,
-		});
+		// Is waiting
+		setAuthState('waiting');
+
+		// Fake auth delay (would perhaps authenticate via passwordless authentication and fetch currentUser data, inc highScore)
+		setTimeout(() => {
+			// Is success
+			setAuthState('success');
+
+			// Set user
+			setCurrentUser({
+				name,
+				email,
+				highScore: 50,
+			});
+		}, 1000);
 
 		// Return
 		return;
@@ -91,7 +106,16 @@ export default function TheAuthProvider(props: TheAuthProviderProps) {
 	// Render default
 	return (
 		<AuthContext.Provider value={{ currentUser, singIn }}>
-			{currentUser ? <>{children}</> : <SectionAuth />}
+			{authState === 'waiting' ? (
+				<AuthIconLoading
+					className="fixed bottom-6 right-6 inline-block"
+					label="Authenticating..."
+				/>
+			) : currentUser ? (
+				children
+			) : (
+				<SectionAuth />
+			)}
 		</AuthContext.Provider>
 	);
 }

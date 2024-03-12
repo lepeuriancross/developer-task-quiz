@@ -88,6 +88,14 @@ export type GameInfoProps = {
 	className?: string;
 	onClickNext: () => void;
 };
+export type GameOverProps = {
+	currentUser?: User | null;
+	gameStatus?: 'idle' | 'question' | 'info' | 'waiting' | 'error' | 'success';
+	countAttempts?: number;
+	countSuccess?: number;
+	className?: string;
+	onClickStart: () => void;
+};
 export type GameButtonProps = {
 	name: string;
 	type: 'button' | 'submit';
@@ -114,15 +122,12 @@ export default function Game(props: GameProps) {
 	/*----- Store -----*/
 
 	// State - gameStatus
-	const [gameStatus, setGameStatus] = useState<'idle' | 'question' | 'info'>(
-		'idle'
-	);
+	const [gameStatus, setGameStatus] = useState<
+		'idle' | 'question' | 'info' | 'waiting' | 'error' | 'success'
+	>('idle');
 
-	// State - question
-	const [question, setQuestion] = useState<Album>();
-
-	// Context - isPresent
-	const [isPresent, safeToRemove] = usePresence();
+	// State - questions
+	const [questions, setQuestions] = useState<Album[]>([]);
 
 	// State - countRound
 	const [countRound, setCountRound] = useState(0);
@@ -136,37 +141,50 @@ export default function Game(props: GameProps) {
 	// Context - auth
 	const { currentUser } = useAuth();
 
+	// Context - isPresent
+	const [isPresent, safeToRemove] = usePresence();
+
 	/*----- Methods -----*/
 
 	// Function - start game
 	function startGame() {
-		// Roll a new question
-		rollQuestion();
+		// Roll a new array of questions
+		const newQuestions = data.albums.map((randomAlbum, a) => {
+			const altOptions = data.albums
+				.map((o: Album) => {
+					if (o.name !== randomAlbum.name) {
+						return o.name;
+					}
+				})
+				.sort(() => 0.5 - Math.random())
+				.slice(0, 2);
+			const options = arShuffle([randomAlbum.name, ...altOptions]);
+			return { ...randomAlbum, options };
+		});
+		const randomFiveQuestions = arShuffle(newQuestions).slice(0, 5);
+
+		// Update questions
+		setQuestions(randomFiveQuestions);
+
+		// Reset counts
+		setCountRound(0);
+		setCountAttempts(0);
+		setCountSuccess(0);
+
+		// Show question
+		setGameStatus('question');
 	}
 
-	// Function - roll question
-	function rollQuestion() {
-		// Pick a random album
-		const randomIndex = Math.floor(Math.random() * data.albums.length);
-		const randomAlbum = data.albums[randomIndex];
+	// Function - end game
+	function endGame() {
+		// Is waiting
+		setGameStatus('waiting');
 
-		// Get options
-		const altOptions = data.albums
-			.map((o: Album) => {
-				if (o.name !== randomAlbum.name) {
-					return o.name;
-				}
-			})
-			.sort(() => 0.5 - Math.random())
-			.slice(0, 2);
-		const options = arShuffle([randomAlbum.name, ...altOptions]);
-
-		// Set state
-		setCountRound(countRound + 1);
-		setQuestion({ ...randomAlbum, options });
-
-		// Set game status - question
-		setGameStatus('question');
+		// Fake POST delay (would update high score on server and local 'currentUser')
+		setTimeout(() => {
+			// Is success
+			setGameStatus('success');
+		}, 1000);
 	}
 
 	// Function - handleClick
@@ -186,8 +204,17 @@ export default function Game(props: GameProps) {
 
 	// Function - handleNext
 	function handleNext() {
-		// Roll a new question
-		rollQuestion();
+		// If remaining questions...
+		if (countRound + 1 < questions.length) {
+			// Inc round
+			setCountRound(countRound + 1);
+
+			// Show question
+			setGameStatus('question');
+		} else {
+			// End game
+			endGame();
+		}
 	}
 
 	/*----- Init -----*/
@@ -196,7 +223,11 @@ export default function Game(props: GameProps) {
 	return (
 		<div className="game w-full max-w-sm mx-auto space-y-6 select-none md:max-w-xl">
 			{/* Scoreboard */}
-			{(gameStatus === 'question' || gameStatus === 'info') && (
+			{(gameStatus === 'question' ||
+				gameStatus === 'info' ||
+				gameStatus === 'waiting' ||
+				gameStatus === 'error' ||
+				gameStatus === 'success') && (
 				<motion.div
 					className="game__page--question"
 					initial="initial"
@@ -217,6 +248,7 @@ export default function Game(props: GameProps) {
 			<AnimatePresence mode="wait">
 				{gameStatus === 'idle' ? (
 					<motion.div
+						key={`game-intro`}
 						className="game__page--intro"
 						initial="initial"
 						animate="animate"
@@ -232,7 +264,7 @@ export default function Game(props: GameProps) {
 							<GameIntro currentUser={currentUser} onClickStart={startGame} />
 						</Freeze>
 					</motion.div>
-				) : gameStatus === 'question' && question ? (
+				) : gameStatus === 'question' && questions[countRound] ? (
 					<motion.div
 						key={`game-question-${countRound}`}
 						className="game__page--question"
@@ -250,13 +282,13 @@ export default function Game(props: GameProps) {
 							<GameQuestion
 								countRound={countRound}
 								artist={data.artist}
-								question={question}
+								question={questions[countRound]}
 								onClick={handleClick}
 								onSuccess={handleSuccess}
 							/>
 						</Freeze>
 					</motion.div>
-				) : gameStatus === 'info' && question ? (
+				) : gameStatus === 'info' && questions[countRound] ? (
 					<motion.div
 						key={`game-info-${countRound}`}
 						className="game__page--question"
@@ -271,7 +303,36 @@ export default function Game(props: GameProps) {
 						}}
 					>
 						<Freeze freeze={!isPresent}>
-							<GameInfo question={question} onClickNext={handleNext} />
+							<GameInfo
+								question={questions[countRound]}
+								onClickNext={handleNext}
+							/>
+						</Freeze>
+					</motion.div>
+				) : gameStatus === 'waiting' ||
+				  gameStatus === 'error' ||
+				  gameStatus === 'success' ? (
+					<motion.div
+						key={`game-over`}
+						className="game__page--game-over"
+						initial="initial"
+						animate="animate"
+						exit="exit"
+						variants={motionPage}
+						onCompositionEnd={() => {
+							if (!isPresent) {
+								safeToRemove();
+							}
+						}}
+					>
+						<Freeze freeze={!isPresent}>
+							<GameOver
+								gameStatus={gameStatus}
+								currentUser={currentUser}
+								countAttempts={countAttempts}
+								countSuccess={countSuccess}
+								onClickStart={startGame}
+							/>
 						</Freeze>
 					</motion.div>
 				) : null}
@@ -483,8 +544,6 @@ export function GameInfo(props: GameInfoProps) {
 
 	/*----- Init -----*/
 
-	console.log(question);
-
 	// Return
 	return (
 		<div className={classNames(`game__info w-full text-center`, className)}>
@@ -505,6 +564,56 @@ export function GameInfo(props: GameInfoProps) {
 							theme="dark"
 							className="mt-6"
 							onClick={onClickNext}
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+// GameOver component
+export function GameOver(props: GameOverProps) {
+	/*----- Props -----*/
+
+	// Destructure props
+	const {
+		gameStatus = 'waiting',
+		currentUser,
+		countAttempts = 0,
+		countSuccess = 0,
+		className,
+		onClickStart = () => {},
+	} = props;
+
+	/*----- Init -----*/
+
+	// Calc score
+	const successRate = Math.round((100 / countAttempts) * countSuccess);
+	const highScore = currentUser?.highScore ?? 0;
+	const isHighScore = successRate > highScore;
+
+	// Return
+	return (
+		<div className={classNames(`game__intro w-full text-center`, className)}>
+			<div className="game__container rounded-lg p-6 shadow bg-white text-black">
+				<div className="game__row flex flex-col justify-center items-center">
+					<h1 className="game__title w-full max-w-sm mx-auto font-title font-semibold text-2xl mb-4">
+						Congratulations {currentUser?.name?.split(' ')[0] ?? 'to the game'},
+						you scored {successRate}%
+					</h1>
+					<p className="game__text font-body text-base">
+						{isHighScore
+							? `That's a new high score`
+							: `You didn't quite beat your high score (${highScore})`}
+					</p>
+					<div className="game__buttons">
+						<GameButton
+							name="Play Again"
+							type="button"
+							theme="dark"
+							className="mt-6"
+							onClick={onClickStart}
 						/>
 					</div>
 				</div>
@@ -544,9 +653,9 @@ export function GameButton(props: GameButtonProps) {
 		>
 			<div
 				className={classNames(
-					`game__button-bg absolute z-10 top-0 left-0 w-full h-full border-[2px] rounded-full`,
+					`game__button-bg absolute z-10 top-0 left-0 w-full h-full rounded-full`,
 					theme === 'light'
-						? `border-white/50 group-hover:border-white`
+						? `border-[2px] border-white/50 group-hover:border-white`
 						: 'bg-gradient-to-r from-blue to-purple'
 				)}
 			/>
